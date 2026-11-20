@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firaza Hampers - AI Order & Greeting Assistant</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+  <nav class="bg-emerald-800 text-white px-6 py-4 shadow">
+    <div class="max-w-5xl mx-auto flex justify-between items-center">
+      <div>
+        <h1 class="text-xl font-bold tracking-wide">FIRAZA HAMPERS</h1>
+        <p class="text-xs text-emerald-200">AI-Powered Order Extraction & Greeting Card System</p>
+      </div>
+      <span class="text-xs bg-emerald-700 px-3 py-1 rounded-full border border-emerald-500">System Ready</span>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto p-6 space-y-8">
+    
+    <!-- BAGIAN 1: EKSTRAKSI CHAT & GENERATOR UCAPAN -->
+    <div class="grid md:grid-cols-2 gap-6">
+      
+      <!-- Kiri: Input Chat Pelanggan -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h2 class="font-bold text-lg text-emerald-900">1. Ekstrak Pesanan dari Chat</h2>
+        <p class="text-xs text-slate-500">Tempel pesan WhatsApp/DM pelanggan, AI akan mengisi form pesanan secara otomatis.</p>
+        <textarea id="chatInput" rows="4" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-emerald-600" placeholder="Contoh: Halo kak mau pesan hampers Lebaran 2 box atas nama Budi, warna pita gold, dikirim ke Bandung..."></textarea>
+        <button onclick="extractOrder()" id="btnExtract" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+          Ekstrak Otomatis dengan AI
+        </button>
+      </div>
+
+      <!-- Kanan: Input Konteks Kartu Ucapan -->
+      <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h2 class="font-bold text-lg text-emerald-900">2. Buat Draf Kartu Ucapan</h2>
+        <p class="text-xs text-slate-500">Masukkan nama pengirim, penerima, dan acara untuk membuat kalimat kartu ucapan.</p>
+        <textarea id="greetingPrompt" rows="4" class="w-full border border-slate-300 rounded-lg p-3 text-sm focus:outline-emerald-600" placeholder="Contoh: Ucapan selamat Idul Fitri yang hangat untuk Bapak Budi & keluarga dari Sheby..."></textarea>
+        <button onclick="generateGreeting()" id="btnGreeting" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2.5 rounded-lg text-sm transition">
+          Generate Ucapan dengan AI
+        </button>
+      </div>
+    </div>
+
+    <!-- BAGIAN 2: FORM HASIL EKSTRAKSI & SIMPAN ORDER -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h2 class="font-bold text-lg text-slate-800">3. Detail Pesanan (Hasil AI / Edit Manual)</h2>
+        <span id="aiBadge" class="hidden text-xs px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-medium">Terisi Otomatis oleh AI</span>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4 text-sm">
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Jenis Produk</label>
+          <input type="text" id="product_type" class="w-full border rounded-lg p-2.5" placeholder="Hampers Lebaran">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Jumlah (Box)</label>
+          <input type="number" id="quantity" value="1" min="1" class="w-full border rounded-lg p-2.5">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Nama Kustom / Penerima</label>
+          <input type="text" id="custom_name" class="w-full border rounded-lg p-2.5" placeholder="Nama penerima">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Gaya Font</label>
+          <input type="text" id="font_style" class="w-full border rounded-lg p-2.5" placeholder="Opsional">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Pilihan Warna / Tema</label>
+          <input type="text" id="color_option" class="w-full border rounded-lg p-2.5" placeholder="Opsional">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-600 mb-1">Catatan / Alamat Kirim</label>
+          <input type="text" id="special_instructions" class="w-full border rounded-lg p-2.5" placeholder="Catatan pengiriman">
+        </div>
+      </div>
+
+      <div class="text-sm">
+        <label class="block font-medium text-slate-600 mb-1">Isi Kartu Ucapan</label>
+        <textarea id="greeting_message" rows="2" class="w-full border rounded-lg p-2.5" placeholder="Teks kartu ucapan akan muncul di sini..."></textarea>
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <button onclick="saveOrder()" class="bg-slate-800 hover:bg-slate-900 text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition">
+          + Simpan ke Daftar Pesanan
+        </button>
+      </div>
+    </div>
+
+    <!-- BAGIAN 3: TABEL DATABASE PESANAN LOKAL -->
+    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="font-bold text-lg text-slate-800">4. Rekap Pesanan Tersimpan</h2>
+        <button onclick="exportCSV()" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 font-semibold px-3 py-1.5 rounded-lg">
+          Download CSV (Excel)
+        </button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-100 text-slate-600 border-b">
+              <th class="p-3">Produk</th>
+              <th class="p-3">Qty</th>
+              <th class="p-3">Nama</th>
+              <th class="p-3">Warna/Font</th>
+              <th class="p-3">Catatan</th>
+              <th class="p-3">Kartu Ucapan</th>
+              <th class="p-3">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="orderTableBody" class="divide-y"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const API_BASE = "https://firaza-ai-service.onrender.com";
+    const API_KEY = "firaza-secret-2026";
+
+    // 1. Panggil API Ekstraksi Order
+    async function extractOrder() {
+      const chatText = document.getElementById("chatInput").value.trim();
+      if (!chatText) return alert("Masukkan teks chat pelanggan terlebih dahulu.");
+
+      const btn = document.getElementById("btnExtract");
+      btn.disabled = true;
+      btn.innerText = "Memproses AI... (Tunggu 3-15 detik jika server baru bangun)";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/extract-order`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-firaza-key": API_KEY },
+          body: JSON.stringify({ chat_text: chatText })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.detail || "Gagal mengekstrak data");
+
+        const d = result.data;
+        document.getElementById("product_type").value = d.product_type || "";
+        document.getElementById("quantity").value = d.quantity || 1;
+        document.getElementById("custom_name").value = d.custom_name || "";
+        document.getElementById("font_style").value = d.font_style || "";
+        document.getElementById("color_option").value = d.color_option || "";
+        document.getElementById("special_instructions").value = d.special_instructions || "";
+        document.getElementById("aiBadge").classList.remove("hidden");
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Ekstrak Otomatis dengan AI";
+      }
+    }
+
+    // 2. Panggil API Kartu Ucapan
+    async function generateGreeting() {
+      const promptText = document.getElementById("greetingPrompt").value.trim();
+      if (!promptText) return alert("Masukkan konteks kartu ucapan terlebih dahulu.");
+
+      const btn = document.getElementById("btnGreeting");
+      btn.disabled = true;
+      btn.innerText = "Menulis Ucapan...";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/generate-greeting`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-firaza-key": API_KEY },
+          body: JSON.stringify({ prompt_text: promptText })
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.detail || "Gagal membuat ucapan");
+
+        document.getElementById("greeting_message").value = result.greeting;
+      } catch (err) {
+        alert("Error: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Generate Ucapan dengan AI";
+      }
+    }
+
+    // 3. Simpan ke LocalStorage (Database Browser)
+    function saveOrder() {
+      const order = {
+        id: Date.now(),
+        product_type: document.getElementById("product_type").value || "-",
+        quantity: document.getElementById("quantity").value || 1,
+        custom_name: document.getElementById("custom_name").value || "-",
+        font_style: document.getElementById("font_style").value || "-",
+        color_option: document.getElementById("color_option").value || "-",
+        special_instructions: document.getElementById("special_instructions").value || "-",
+        greeting_message: document.getElementById("greeting_message").value || "-"
+      };
+
+      const orders = JSON.parse(localStorage.getItem("firaza_orders") || "[]");
+      orders.unshift(order);
+      localStorage.setItem("firaza_orders", JSON.stringify(orders));
+      renderTable();
+      alert("Pesanan berhasil disimpan!");
+    }
+
+    function deleteOrder(id) {
+      let orders = JSON.parse(localStorage.getItem("firaza_orders") || "[]");
+      orders = orders.filter(o => o.id !== id);
+      localStorage.setItem("firaza_orders", JSON.stringify(orders));
+      renderTable();
+    }
+
+    function renderTable() {
+      const orders = JSON.parse(localStorage.getItem("firaza_orders") || "[]");
+      const tbody = document.getElementById("orderTableBody");
+      tbody.innerHTML = orders.length ? orders.map(o => `
+        <tr>
+          <td class="p-3 font-medium">${o.product_type}</td>
+          <td class="p-3">${o.quantity}</td>
+          <td class="p-3">${o.custom_name}</td>
+          <td class="p-3">${o.color_option} / ${o.font_style}</td>
+          <td class="p-3">${o.special_instructions}</td>
+          <td class="p-3 max-w-xs truncate" title="${o.greeting_message}">${o.greeting_message}</td>
+          <td class="p-3"><button onclick="deleteOrder(${o.id})" class="text-red-600 hover:underline">Hapus</button></td>
+        </tr>
+      `).join("") : `<tr><td colspan="7" class="p-4 text-center text-slate-400">Belum ada pesanan tersimpan.</td></tr>`;
+    }
+
+    function exportCSV() {
+      const orders = JSON.parse(localStorage.getItem("firaza_orders") || "[]");
+      if (!orders.length) return alert("Belum ada data untuk diunduh.");
+      const headers = ["Produk,Jumlah,Nama,Font,Warna,Catatan,Kartu Ucapan"];
+      const rows = orders.map(o => `"${o.product_type}","${o.quantity}","${o.custom_name}","${o.font_style}","${o.color_option}","${o.special_instructions}","${o.greeting_message.replace(/"/g, '""')}"`);
+      const blob = new Blob([headers.concat(rows).join("\n")], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "rekap-pesanan-firaza.csv";
+      a.click();
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
